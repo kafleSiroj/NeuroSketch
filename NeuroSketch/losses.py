@@ -8,6 +8,8 @@ class Loss:
         self._n = None
     
     def __call__(self, pred, label):
+        self._n = len(label)
+        self._label = label
         return self.forward(pred, label)
     
     def forward(self, pred, label):
@@ -20,10 +22,7 @@ class Loss:
 
 class MSELoss(Loss):
     def forward(self, pred, label):
-        self._n = len(label)
-
         loss = np.mean(np.square(pred - label))
-        self._label = label
         self._pred = pred
         return loss
     
@@ -37,10 +36,7 @@ class MSELoss(Loss):
 
 class MAELoss(Loss):
     def forward(self, pred, label):
-        self._n = len(label)
-
         loss = np.mean(abs(label - pred))
-        self._label = label
         self._pred = pred
         return loss
     
@@ -54,11 +50,8 @@ class MAELoss(Loss):
 
 class BinaryCrossentropyLoss(Loss):
     def forward(self, pred, label):
-        self._n = len(label)
-
         y_hat = np.clip(pred, self.epsilon, 1 - self.epsilon)
         loss = -np.mean(label*np.log(y_hat) + (1-label)*np.log(1-y_hat))
-        self._label = label
         self._pred = y_hat
         return loss
     
@@ -72,16 +65,11 @@ class BinaryCrossentropyLoss(Loss):
 
 class SparseCategoricalCrossentropyLoss(Loss):
     def forward(self, pred, label):
-        self._n = len(label)
-
         y_hat  = np.clip(pred, self.epsilon, 1 - self.epsilon)
         tclss = y_hat[np.arange(self._n), label]
         loss = -np.mean(np.log(tclss))
 
-        self._label = label
         self._pred = (y_hat, tclss)
-
-
         return loss
 
     def backward(self):
