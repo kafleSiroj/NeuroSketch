@@ -68,7 +68,6 @@ class SparseCategoricalCrossentropyLoss(Loss):
         y_hat  = np.clip(pred, self.epsilon, 1 - self.epsilon)
         tclss = y_hat[np.arange(self._n), label]
         loss = -np.mean(np.log(tclss))
-
         self._pred = (y_hat, tclss)
         return loss
 
