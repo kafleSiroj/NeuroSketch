@@ -1,5 +1,5 @@
 import numpy as np
-from _module import Module
+from ._module import Module
 
 class Activation(Module):
     def forward(self, x):
