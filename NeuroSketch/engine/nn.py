@@ -1,5 +1,5 @@
 import numpy as np
-from NeuroSketch.engine.module import Module
+from _module import Module
 
 class Linear(Module):
     def __init__(self, in_features, out_features, init_type=None):
