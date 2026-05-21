@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scratch-like UI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">Scratch-like Block Editor</div>
+
+    <div class="sidebar">
+        <!-- Motion Category -->
+        <div class="category">
+            <div class="category-title expanded">Neural Network</div>
+            <div class="blocks-container">
+                <button class="Button" id="add">Add Layer</button>
+                <button class="Button" id="remove">Remove Layer</button>
+            </div>
+        </div>
+
+        <!-- Control Category -->
+        <div class="category">
+            <div class="category-title expanded">Control</div>
+            <div class="blocks-container">
+                <div class="block control" draggable="true">If then</div>
+                <div class="block control" draggable="true">Repeat 10</div>
+                <div class="block control" draggable="true">Forever</div>
+                <div class="block control" draggable="true">Wait 1 second</div>
+            </div>
+        </div>
+
+        <!-- Looks Category -->
+        <div class="category">
+            <div class="category-title expanded">Looks</div>
+            <div class="blocks-container">
+                <div class="block looks" draggable="true">Say "Hello"</div>
+                <div class="block looks" draggable="true">Think "Hmm"</div>
+                <div class="block looks" draggable="true">Change size by 10</div>
+                <div class="block looks" draggable="true">Set color to red</div>
+            </div>
+        </div>
+
+        <!-- Sound Category -->
+        <div class="category">
+            <div class="category-title expanded">Sound</div>
+            <div class="blocks-container">
+                <div class="block sound" draggable="true">Play sound pop</div>
+                <div class="block sound" draggable="true">Change volume by -10</div>
+                <div class="block sound" draggable="true">Set tempo to 120</div>
+            </div>
+        </div>
+
+        <!-- Events Category -->
+        <div class="category">
+            <div class="category-title expanded">Events</div>
+            <div class="blocks-container">
+                <div class="block events" draggable="true">When clicked</div>
+                <div class="block events" draggable="true">When key pressed</div>
+                <div class="block events" draggable="true">Broadcast message</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="workspace" id="workspace">
+            <div class="workspace-label">Drag blocks here to start building!</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
