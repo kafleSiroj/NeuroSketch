@@ -1,11 +1,13 @@
 import numpy as np
 
 class Loss:
-    def __init__(self):
+    def __init__(self, last_lay):
         self.epsilon = 1e-4
         self._label = None
         self._pred = None
         self._n = None
+        self.last_lay = last_lay
+        self._backward = None
     
     def __call__(self, pred, label):
         self._n = len(label)
@@ -28,8 +30,9 @@ class MSELoss(Loss):
     
     def backward(self):
         grad = 2 * (self._pred - self._label) / self._n
-        return grad
-    
+        self._backward = grad
+        self.last_lay.backward(grad)
+
     def __repr__(self):
         return "MSELoss()"
     
@@ -42,7 +45,8 @@ class MAELoss(Loss):
     
     def backward(self):
         grad = np.sign(self._pred - self._label) / self._n
-        return grad
+        self._backward = grad
+        self.last_lay.backward(grad)
 
     def __repr__(self):
         return "MAELoss()"
@@ -56,8 +60,9 @@ class BinaryCrossentropyLoss(Loss):
         return loss
     
     def backward(self):
-        grad = ((self._pred-self._label) / (self._pred*(1-self._pred))) / self._n
-        return grad
+        grad = (self._pred-self._label) / self._n
+        self._backward = grad
+        self.last_lay.backward(grad)  #expects Sigmoid
 
     def __repr__(self):
         return f"BinaryCrossentropyLoss(epsilon={self.epsilon})"
@@ -74,7 +79,8 @@ class SparseCategoricalCrossentropyLoss(Loss):
     def backward(self):
         grad = np.zeros_like(self._pred[0])
         grad[np.arange(self._n), self._label] = -1 / (self._pred[1] * self._n)
-        return grad
+        self._backward = grad  #expects softmax
+        self.last_lay.backward(grad)
 
     def __repr__(self):
         return f"SparseCategoricalCrossentropyLoss(epsilon={self.epsilon})"
