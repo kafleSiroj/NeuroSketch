@@ -5,7 +5,7 @@ class Activation(Module):
     def forward(self, x):
         raise NotImplementedError
     
-    def _backward(self):
+    def backward(self):
         raise NotImplementedError
     
     
@@ -16,7 +16,7 @@ class ReLU(Activation):
         self.out = val
         return val
     
-    def _backward(self):
+    def backward(self):
         grad = np.where(self.input > 0.0, 1.0, 0.0)
         return grad          
     
@@ -31,7 +31,7 @@ class Sigmoid(Activation):
         self.out = val
         return val
     
-    def _backward(self):
+    def backward(self):
         grad = self.out*(1-self.out)
         return grad
     
@@ -48,7 +48,7 @@ class Softmax(Activation):
         self.out = probs
         return probs
     
-    def _backward(self):
+    def backward(self):
         jac = []
         for prob in self.out:
             grad = np.diag(prob) - np.outer(prob, prob)
