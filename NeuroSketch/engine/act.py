@@ -5,7 +5,7 @@ class Activation(Module):
     def forward(self, x):
         raise NotImplementedError
     
-    def backward(self):
+    def backward_(self):
         raise NotImplementedError
     
     
@@ -16,7 +16,7 @@ class ReLU(Activation):
         self.out = val
         return val
     
-    def backward(self):
+    def backward_(self):
         grad = np.where(self.input > 0.0, 1.0, 0.0)
         return grad          
     
@@ -24,22 +24,24 @@ class ReLU(Activation):
         return "ReLU()"
     
 
-class Sigmoid(Activation):
+class Sigmoid(Activation):  #mul
     def forward(self, x):
         val = 1 / (1 + np.exp(-x))
         self.input = x
         self.out = val
         return val
     
-    def backward(self):
+    def backward_(self, grad_next):
         grad = self.out*(1-self.out)
-        return grad
+        n_grad = grad_next * grad
+
+        return n_grad
     
     def __repr__(self):
         return "Sigmoid()"
     
 
-class Softmax(Activation):
+class Softmax(Activation): #matmul
     def forward(self, x):
         final_x = x - np.max(x, axis=1, keepdims=True)
         exp_x = np.exp(final_x)
@@ -48,14 +50,14 @@ class Softmax(Activation):
         self.out = probs
         return probs
     
-    def backward(self):
+    def backward_(self, grad_next):
         jac = []
         for prob in self.out:
             grad = np.diag(prob) - np.outer(prob, prob)
             jac.append(grad)
 
         return np.array(jac)
-    
+    #tommorow , i will complete backprop part, hence framework is over, i will head to frontend prolly day after tommorow, and it may take 2 days i guess. and backend + error handling in 3 days ig            
     def __repr__(self):
         return "Softmax()"
     
@@ -67,7 +69,7 @@ class Tanh(Activation):
         self.out = val
         return val
     
-    def _backward(self):
+    def backward_(self):
         grad = 1 - self.out**2
         return grad
     
@@ -82,7 +84,7 @@ class HeavySide(Activation):
         self.out = x
         return val
     
-    def _backward(self):
+    def backward_(self):
         return np.zeros_like(self.input)
 
     def __repr__(self):
@@ -100,7 +102,7 @@ class Swish(Activation):
         self.out = x
         return val
     
-    def _backward(self):
+    def backward_(self):
         sig_val = 1 / (1 + np.exp(-self.beta*self.input))
         sig_grad = sig_val*(1-sig_val)
 
@@ -121,10 +123,9 @@ class LeakyReLU(Activation):
         self.out = x
         return val
     
-    def _backward(self):
+    def backward_(self):
         grad = np.where(self.input > 0.0, 1.0, self.alpha)
         return grad
 
     def __repr__(self):
         return f"LeakyReLU(alpha={self.alpha})"
-    

@@ -80,7 +80,8 @@ class SparseCategoricalCrossentropyLoss(Loss):
         grad = np.zeros_like(self._pred[0])
         grad[np.arange(self._n), self._label] = -1 / (self._pred[1] * self._n)
         self._backward = grad  #expects softmax
-        self.last_lay.backward(grad)
+        self.last_lay.backward_(grad)
+        return grad
 
     def __repr__(self):
         return f"SparseCategoricalCrossentropyLoss(epsilon={self.epsilon})"

@@ -25,12 +25,13 @@ class Linear(Module):
         self.out = val
         return val
     
-    def backward(self, next_grad):
+    def backward_(self, next_grad):
         self.dW = next_grad.T @ self.input
         self.dB = np.sum(next_grad, axis=0)
 
         return next_grad @ self.weight
-
+    
+    
     def __repr__(self):
         return f"Linear(in={self.in_features}, out={self.out_features})"
 
