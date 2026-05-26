@@ -49,11 +49,11 @@ class MOMENTUM(Optim):
         self.lin_lays = self._call_back()
         for l in range(len(self.lin_lays)):
             #for weights
-            self.m["weights"][l] = self._up_mov(self.m["weights"], self.lin_lays[l].dW, self.beta)
+            self.m["weights"][l] = self._up_mov(self.m["weights"], self.lin_lays[l].dW, self.beta, "m")
             self.lin_lays[l].params["weights"] -= self.lr*self.m["weights"][l]
 
             #for biases
-            self.m["biases"][l] = self._up_mov(self.m["biases"], self.lin_lays[l].dB, self.beta)
+            self.m["biases"][l] = self._up_mov(self.m["biases"], self.lin_lays[l].dB, self.beta, "m")
             self.lin_lays[l].params["biases"] -= self.lr*self.m["biases"][l]
 
 
