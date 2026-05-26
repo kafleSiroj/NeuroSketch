@@ -1,5 +1,5 @@
 import numpy as np
-
+# i know it is incomplete, but my current approach is correct. i will surely have shape issues, but i will manage it later on. it is quite a circular framework, not ideal to be honest, however not circular in general snese  
 class Loss:
     def __init__(self, last_lay):
         self.epsilon = 1e-4
@@ -31,7 +31,7 @@ class MSELoss(Loss):
     def backward(self):
         grad = 2 * (self._pred - self._label) / self._n
         self._backward = grad
-        self.last_lay.backward(grad)
+        self.last_lay.grad_next = grad
 
     def __repr__(self):
         return "MSELoss()"
@@ -46,7 +46,7 @@ class MAELoss(Loss):
     def backward(self):
         grad = np.sign(self._pred - self._label) / self._n
         self._backward = grad
-        self.last_lay.backward(grad)
+        self.last_lay.grad_next = grad
 
     def __repr__(self):
         return "MAELoss()"
@@ -62,7 +62,7 @@ class BinaryCrossentropyLoss(Loss):
     def backward(self):
         grad = (self._pred-self._label) / self._n
         self._backward = grad
-        self.last_lay.backward(grad)  #expects Sigmoid
+        self.last_lay.grad_next = grad   #expects sigmoid
 
     def __repr__(self):
         return f"BinaryCrossentropyLoss(epsilon={self.epsilon})"
@@ -80,8 +80,7 @@ class SparseCategoricalCrossentropyLoss(Loss):
         grad = np.zeros_like(self._pred[0])
         grad[np.arange(self._n), self._label] = -1 / (self._pred[1] * self._n)
         self._backward = grad  #expects softmax
-        self.last_lay.backward_(grad)
-        return grad
+        self.last_lay.grad_next = grad
 
     def __repr__(self):
         return f"SparseCategoricalCrossentropyLoss(epsilon={self.epsilon})"
