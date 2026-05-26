@@ -6,6 +6,8 @@ class Linear(Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
+        self.dW = None
+        self.dB = None
 
         std = 0.01
         if init_type=="he":
@@ -29,8 +31,8 @@ class Linear(Module):
         self.dW = next_grad.T @ self.input
         self.dB = np.sum(next_grad, axis=0)
 
-        return next_grad @ self.weight
-    
+        self.grad_next = next_grad @ self.weight
+        return self.grad_next
     
     def __repr__(self):
         return f"Linear(in={self.in_features}, out={self.out_features})"
