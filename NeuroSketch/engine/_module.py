@@ -4,7 +4,7 @@ class Module:
         self.layers = []
         self.out = None
         self.input = None
-        self.grad_next = []
+        self.grad_next = None
 
     def forward(self, x):
         raise NotImplementedError
@@ -20,5 +20,5 @@ class Module:
         self.params["weights"].append(weight) 
         self.params["biases"].append(bias)
 
-    def backward_(self, grad_next):
+    def backward_(self, next_grad):
         raise NotImplementedError
