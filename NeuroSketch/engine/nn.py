@@ -17,12 +17,12 @@ class Linear(Module):
         elif init_type=="zero":
             std = 0
 
-        self.weight = np.random.randn(out_features, in_features) * std
-        self.bias = np.zeros((out_features, 1))
-        self._register_params(self.weight, self.bias)
+        weight = np.random.randn(out_features, in_features) * std
+        bias = np.zeros((out_features))
+        self._register_params(weight, bias)
 
     def forward(self, x):
-        val = x @ self.weight.T + self.bias.T
+        val = x @ self.params["weights"][0].T + self.params["biases"][0]
         self.input = x 
         self.out = val
         return val
@@ -30,8 +30,10 @@ class Linear(Module):
     def backward_(self, next_grad):
         self.dW = next_grad.T @ self.input
         self.dB = np.sum(next_grad, axis=0)
+        # print("dB:", self.dB)
+        # print("call_back func: ", [self.dW, self.dB])
 
-        self.grad_next = next_grad @ self.weight
+        self.grad_next = next_grad @ self.params["weights"][0]
         return self.grad_next
     
     def __repr__(self):

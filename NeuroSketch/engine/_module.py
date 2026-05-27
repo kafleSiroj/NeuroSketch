@@ -17,7 +17,7 @@ class Module:
             self.params["weights"] = []
             self.params["biases"] = []
         
-        self.params["weights"].append(weight) 
+        self.params["weights"].append(weight) #shape issue does't match with grad. here shape
         self.params["biases"].append(bias)
 
     def backward_(self, next_grad):
