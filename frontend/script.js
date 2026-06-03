@@ -1,127 +1,304 @@
-let draggedElement = null;
-let draggedFromSidebar = false;
+let layers = [];
+let selectedLayer = null;
+let canvas, ctx;
+let canvasWidth, canvasHeight;
+const layerSpacing = 120; // Horizontal spacing between layers
+const verticalPadding = 60;
+const nodeRadius = 8;
 
-const sidebar = document.querySelector('.sidebar');
-const workspace = document.querySelector('#workspace');
+const workspace = document.getElementById('workspace');
+const canvasHint = document.getElementById('canvasHint');
+const layerInfoPanel = document.getElementById('layerInfoPanel');
+const layerInfoTitle = document.getElementById('layerInfoTitle');
+const layerInfoContent = document.getElementById('layerInfoContent');
 
-// Sidebar drag and drop
-sidebar.addEventListener('dragstart', (e) => {
-    if (e.target.classList.contains('block')) {
-        draggedElement = e.target;
-        draggedFromSidebar = true;
-        e.target.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'copy';
-        e.dataTransfer.setData('text/html', e.target.innerHTML);
+// Layer configurations
+const layerConfigs = {
+    input: {
+        name: 'Input',
+        color: '#00d4ff',
+        defaultNeurons: 784
+    },
+    dense: {
+        name: 'Dense',
+        color: '#667eea',
+        defaultNeurons: 128
+    },
+    relu: {
+        name: 'ReLU',
+        color: '#ff8844',
+        defaultNeurons: null
+    },
+    conv: {
+        name: 'Conv2D',
+        color: '#44ff88',
+        defaultNeurons: 32
+    },
+    pool: {
+        name: 'MaxPool',
+        color: '#ff44ff',
+        defaultNeurons: null
+    },
+    output: {
+        name: 'Output',
+        color: '#ffdd44',
+        defaultNeurons: 10
     }
-});
+};
 
-sidebar.addEventListener('dragend', (e) => {
-    if (draggedElement) {
-        draggedElement.classList.remove('dragging');
-        draggedElement = null;
-        draggedFromSidebar = false;
+// Initialize canvas
+function initCanvas() {
+    canvas = document.getElementById('networkCanvas');
+    ctx = canvas.getContext('2d');
+    
+    function resizeCanvas() {
+        canvasWidth = workspace.clientWidth;
+        canvasHeight = workspace.clientHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        redraw();
     }
-});
-
-// Workspace drag over and drop
-workspace.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-    workspace.classList.add('drag-over');
-});
-
-workspace.addEventListener('dragleave', (e) => {
-    if (e.target === workspace) {
-        workspace.classList.remove('drag-over');
-    }
-});
-
-workspace.addEventListener('drop', (e) => {
-    e.preventDefault();
-    workspace.classList.remove('drag-over');
-
-    if (draggedFromSidebar && draggedElement) {
-        // Create a new block in the workspace
-        const newBlock = document.createElement('div');
-        newBlock.className = `dropped-block ${draggedElement.className.split(' ').pop()}`;
-        newBlock.draggable = true;
-        newBlock.textContent = draggedElement.textContent;
-
-        // Add delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.innerHTML = '×';
-        deleteBtn.addEventListener('click', () => {
-            newBlock.remove();
-            if (workspace.children.length === 1) {
-                workspace.classList.remove('has-blocks');
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Handle canvas click to select layer or add neuron
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        for (let i = 0; i < layers.length; i++) {
+            const positions = getNeuronPositions(i);
+            
+            // Check if clicked on a neuron
+            for (let pos of positions) {
+                const dist = Math.hypot(x - pos.x, y - pos.y);
+                if (dist < nodeRadius + 5) {
+                    selectedLayer = i;
+                    showLayerInfo(i);
+                    redraw();
+                    return;
+                }
             }
-        });
-        newBlock.appendChild(deleteBtn);
-
-        workspace.appendChild(newBlock);
-        workspace.classList.add('has-blocks');
-
-        // Make the new block draggable within workspace
-        makeWorkspaceBlockDraggable(newBlock);
-    }
-});
-
-// Workspace block repositioning
-function makeWorkspaceBlockDraggable(block) {
-    let offsetX = 0;
-    let offsetY = 0;
-
-    block.addEventListener('dragstart', (e) => {
-        draggedFromSidebar = false;
-        draggedElement = block;
-        block.classList.add('dragging-workspace');
-        e.dataTransfer.effectAllowed = 'move';
-
-        const rect = block.getBoundingClientRect();
-        const workspaceRect = workspace.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
-    });
-
-    block.addEventListener('dragend', (e) => {
-        block.classList.remove('dragging-workspace');
-        draggedElement = null;
+        }
+        
+        // If no neuron clicked, deselect
+        selectedLayer = null;
+        layerInfoPanel.style.display = 'none';
+        redraw();
     });
 }
 
-// Category collapse/expand
-const categoryTitles = document.querySelectorAll('.category-title');
-categoryTitles.forEach((title) => {
-    title.addEventListener('click', () => {
-        const container = title.nextElementSibling;
-        title.classList.toggle('expanded');
-        title.classList.toggle('collapsed');
-        container.classList.toggle('hidden');
+// Add layer
+function addLayer(type) {
+    const config = layerConfigs[type];
+    const layer = {
+        id: `layer-${layers.length}`,
+        type: type,
+        name: config.name,
+        neurons: config.defaultNeurons,
+        color: config.color,
+        x: layers.length * layerSpacing + 50,
+    };
+    layers.push(layer);
+    redraw();
+    updateHint();
+}
+
+// Calculate neuron positions
+function getNeuronPositions(layerIndex) {
+    const layer = layers[layerIndex];
+    if (!layer.neurons) return [];
+    
+    const positions = [];
+    const neuronCount = Math.min(layer.neurons, 20); // Max 20 neurons visible
+    const startY = (canvasHeight - (neuronCount - 1) * 30) / 2;
+    
+    for (let i = 0; i < neuronCount; i++) {
+        positions.push({
+            x: layer.x,
+            y: startY + i * 30,
+            index: i,
+            totalNeurons: layer.neurons
+        });
+    }
+    return positions;
+}
+
+// Draw network
+function redraw() {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    if (layers.length === 0) return;
+    
+    // Draw connections
+    drawConnections();
+    
+    // Draw neurons
+    for (let i = 0; i < layers.length; i++) {
+        drawLayer(i);
+    }
+}
+
+// Draw connections between layers
+function drawConnections() {
+    for (let i = 0; i < layers.length - 1; i++) {
+        const currentPositions = getNeuronPositions(i);
+        const nextPositions = getNeuronPositions(i + 1);
+        
+        ctx.strokeStyle = 'rgba(100, 150, 255, 0.2)';
+        ctx.lineWidth = 1;
+        
+        currentPositions.forEach(curr => {
+            nextPositions.forEach(next => {
+                ctx.beginPath();
+                ctx.moveTo(curr.x + 25, curr.y);
+                ctx.lineTo(next.x - 25, next.y);
+                ctx.stroke();
+            });
+        });
+    }
+}
+
+// Draw layer
+function drawLayer(layerIndex) {
+    const layer = layers[layerIndex];
+    const positions = getNeuronPositions(layerIndex);
+    const isSelected = selectedLayer === layerIndex;
+    
+    // Draw layer label
+    ctx.fillStyle = layer.color;
+    ctx.font = 'bold 12px Arial';
+    ctx.fillText(layer.name, layer.x - 20, 30);
+    
+    if (layer.neurons) {
+        ctx.font = '10px Arial';
+        ctx.fillStyle = '#999';
+        ctx.fillText(`${layer.neurons}N`, layer.x - 15, 45);
+    }
+    
+    // Draw neurons
+    positions.forEach(pos => {
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, nodeRadius, 0, Math.PI * 2);
+        ctx.fillStyle = layer.color;
+        ctx.fill();
+        
+        if (isSelected) {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+    
+    // Draw layer box
+    if (isSelected) {
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        const minY = positions.length > 0 ? Math.min(...positions.map(p => p.y)) : 0;
+        const maxY = positions.length > 0 ? Math.max(...positions.map(p => p.y)) : 0;
+        ctx.strokeRect(layer.x - 30, minY - 20, 60, maxY - minY + 40);
+        ctx.setLineDash([]);
+    }
+}
+
+// Show layer info
+function showLayerInfo(layerIndex) {
+    const layer = layers[layerIndex];
+    layerInfoTitle.textContent = layer.name;
+    
+    let content = `<strong>Type:</strong> ${layer.type}<br>`;
+    if (layer.neurons) {
+        content += `<strong>Neurons:</strong> ${layer.neurons}<br>`;
+        content += `<button onclick="addNeuron(${layerIndex})" style="width:100%;padding:4px;margin-top:5px;background:#667eea;border:none;color:white;cursor:pointer;border-radius:4px;font-size:11px;">+ Add Neuron</button>`;
+        content += `<button onclick="removeNeuron(${layerIndex})" style="width:100%;padding:4px;margin-top:3px;background:#ff6b6b;border:none;color:white;cursor:pointer;border-radius:4px;font-size:11px;">− Remove Neuron</button>`;
+    }
+    content += `<button onclick="deleteLayer(${layerIndex})" style="width:100%;padding:4px;margin-top:3px;background:#ff4444;border:none;color:white;cursor:pointer;border-radius:4px;font-size:11px;">🗑️ Delete Layer</button>`;
+    
+    layerInfoContent.innerHTML = content;
+    layerInfoPanel.style.display = 'block';
+}
+
+// Add neuron
+function addNeuron(layerIndex) {
+    if (layers[layerIndex].neurons) {
+        layers[layerIndex].neurons++;
+        showLayerInfo(layerIndex);
+        redraw();
+    }
+}
+
+// Remove neuron
+function removeNeuron(layerIndex) {
+    if (layers[layerIndex].neurons && layers[layerIndex].neurons > 1) {
+        layers[layerIndex].neurons--;
+        showLayerInfo(layerIndex);
+        redraw();
+    }
+}
+
+// Delete layer
+function deleteLayer(layerIndex) {
+    layers.splice(layerIndex, 1);
+    // Recalculate layer IDs and positions
+    layers = layers.map((layer, idx) => ({
+        ...layer,
+        id: `layer-${idx}`,
+        x: idx * layerSpacing + 50
+    }));
+    selectedLayer = null;
+    layerInfoPanel.style.display = 'none';
+    redraw();
+    updateHint();
+}
+
+// Update hint visibility
+function updateHint() {
+    if (layers.length > 0) {
+        workspace.classList.add('has-network');
+        canvasHint.style.display = 'none';
+    } else {
+        workspace.classList.remove('has-network');
+        canvasHint.style.display = 'flex';
+    }
+}
+
+// Clear workspace
+function clearWorkspace() {
+    if (layers.length > 0 && confirm('Clear all layers?')) {
+        layers = [];
+        selectedLayer = null;
+        layerInfoPanel.style.display = 'none';
+        redraw();
+        updateHint();
+    }
+}
+
+// Train network
+function trainNetwork() {
+    if (layers.length === 0) {
+        alert('Please add at least one layer!');
+        return;
+    }
+    const summary = layers.map((l, i) => `${i + 1}. ${l.name}${l.neurons ? ` (${l.neurons}N)` : ''}`).join('\n');
+    alert(`🚀 Training Network\n\n${summary}\n\nStarting training...`);
+}
+
+// Attach layer template listeners
+document.querySelectorAll('.layer-template').forEach(template => {
+    template.addEventListener('click', () => {
+        const type = template.dataset.type;
+        addLayer(type);
     });
 });
 
-// Workspace repositioning for workspace blocks
-workspace.addEventListener('dragover', (e) => {
-    if (!draggedFromSidebar && draggedElement && draggedElement.classList.contains('dropped-block')) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-
-        // Visual feedback for workspace blocks
-        const rect = workspace.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Position follows the cursor
-        draggedElement.style.position = 'absolute';
-        draggedElement.style.left = (x - 60) + 'px';
-        draggedElement.style.top = (y - 20) + 'px';
-    }
-});
-
-workspace.addEventListener('drop', (e) => {
-    if (!draggedFromSidebar && draggedElement && draggedElement.classList.contains('dropped-block')) {
-        e.preventDefault();
-        draggedElement.style.position = 'static';
-    }
-});
+// Initialize
+initCanvas();
+updateHint();
