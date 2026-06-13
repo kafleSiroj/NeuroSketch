@@ -5,7 +5,7 @@ class Activation(Module):
     def forward(self, x):
         raise NotImplementedError
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         raise NotImplementedError
     
     
@@ -16,7 +16,7 @@ class ReLU(Activation):
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         grad = np.where(self.input > 0.0, 1.0, 0.0)
         self.grad_next = next_grad * grad
         return self.grad_next
@@ -32,7 +32,7 @@ class Sigmoid(Activation):  #mul
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         grad = self.out*(1-self.out)
         self.grad_next = next_grad * grad
 
@@ -51,7 +51,7 @@ class Softmax(Activation): #matmul
         self.out = probs
         return probs
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         jac = []
         for prob in self.out:
             grad = np.diag(prob) - np.outer(prob, prob)
@@ -74,7 +74,7 @@ class Tanh(Activation):
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         grad = 1 - self.out**2
         self.grad_next = next_grad * grad
         return self.grad_next
@@ -90,7 +90,7 @@ class HeavySide(Activation):
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         self.grad_next = np.zeros_like(self.input)
         return self.grad_next
 
@@ -109,7 +109,7 @@ class Swish(Activation):
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         sig_val = 1 / (1 + np.exp(-self.beta*self.input))
         sig_grad = sig_val*(1-sig_val)
 
@@ -132,7 +132,7 @@ class LeakyReLU(Activation):
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         grad = np.where(self.input > 0.0, 1.0, self.alpha)
         self.grad_next = next_grad * grad
         return self.grad_next

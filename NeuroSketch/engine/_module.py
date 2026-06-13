@@ -20,5 +20,5 @@ class Module:
         self.params["weights"].append(weight) #shape issue does't match with grad. here shape
         self.params["biases"].append(bias)
 
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         raise NotImplementedError

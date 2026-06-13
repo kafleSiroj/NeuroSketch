@@ -27,7 +27,7 @@ class Linear(Module):
         self.out = val
         return val
     
-    def backward_(self, next_grad):
+    def backward(self, next_grad):
         self.dW = next_grad.T @ self.input
         self.dB = np.sum(next_grad, axis=0)
         # print("dB:", self.dB)

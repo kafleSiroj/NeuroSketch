@@ -14,7 +14,7 @@ class Optim:
 
         lin_lay = []
         for layer in self.model.layers[::-1]:
-            last_grad = layer.backward_(last_grad)
+            last_grad = layer.backward(last_grad)
 
             if hasattr(layer, "dW") and hasattr(layer, "dB"):
                 lin_lay.append(layer)
