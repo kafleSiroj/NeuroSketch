@@ -1,5 +1,5 @@
 import numpy as np
-# i know it is incomplete, but my current approach is correct. i will surely have shape issues, but i will manage it later on. it is quite a circular framework, not ideal to be honest, however not circular in general snese  
+
 class Loss:
     def __init__(self, last_lay):
         self.epsilon = 1e-4
@@ -84,4 +84,3 @@ class SparseCategoricalCrossentropyLoss(Loss):
 
     def __repr__(self):
         return f"SparseCategoricalCrossentropyLoss(epsilon={self.epsilon})"
-    
