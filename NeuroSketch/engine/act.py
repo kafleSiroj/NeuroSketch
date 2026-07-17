@@ -27,7 +27,8 @@ class ReLU(Activation):
 
 class Sigmoid(Activation):  #mul
     def forward(self, x):
-        val = 1 / (1 + np.exp(-x))
+        # print(type(x))
+        val = 1 / (1 + np.exp(-1*x))
         self.input = x
         self.out = val
         return val
@@ -50,21 +51,16 @@ class Softmax(Activation): #matmul
         self.input = x
         self.out = probs
         return probs
-    
-    def backward(self, next_grad):
-        jac = []
-        for prob in self.out:
-            grad = np.diag(prob) - np.outer(prob, prob)
-            jac.append(grad)
-
-        self.grad_next = np.zeros_like(next_grad)
-        for i in range(len(next_grad)):
-            self.grad_next[i] = jac[i] @ next_grad[i]
         
+    def backward(self, next_grad):
+        s_times_g = self.out * next_grad
+        
+        dot = np.sum(s_times_g, axis=1, keepdims=True)      
+        self.grad_next = s_times_g - self.out * dot         
         return self.grad_next
 
     def __repr__(self):
-        return "Softmax()"
+        return "Softmax()" 
     
 
 class Tanh(Activation):
@@ -139,3 +135,6 @@ class LeakyReLU(Activation):
 
     def __repr__(self):
         return f"LeakyReLU(alpha={self.alpha})"
+
+
+
