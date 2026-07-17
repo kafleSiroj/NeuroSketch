@@ -9,14 +9,14 @@ model_dict format:
 {"sequential":("<layer1>", "<layer2>", ...), "loss_fn": "<criterion>", "optimizer_alg": "<optim>"}
 '''
 
-lay_map = {"lin":  Linear, #has arguments so, only obj name
-           "relu": ReLU(),
-           "lrelu": LeakyReLU(),
-           "softmax": Softmax(),
-           "sigmoid": Sigmoid(),
-           "tanh": Tanh(),
-           "swish":Swish(),
-           "heavyside":HeavySide()}
+lay_map = {"lin":  Linear,
+           "relu": ReLU,
+           "lrelu": LeakyReLU,
+           "softmax": Softmax,
+           "sigmoid": Sigmoid,
+           "tanh": Tanh,
+           "swish":Swish,
+           "heavyside":HeavySide}
 
 optim_map = {"sgd": SGD,
              "momentum": MOMENTUM,
@@ -53,9 +53,9 @@ class NetFlow:
         for layer in self.lay_tuple:
             if layer == "lin":
                 curr_lay = lay_map[layer](self.in_out[lin_cnt][0], self.in_out[lin_cnt][1], self.inits[lin_cnt])
-                lin_cnt =+ 1
+                lin_cnt += 1
             else:
-                curr_lay = lay_map[layer]
+                curr_lay = lay_map[layer]()
 
             self.model.add(curr_lay)
         
