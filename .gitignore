@@ -1,4 +1,4 @@
-"/frontend"
-"server.py"
-"test.py"
-"netflow.py"
+frontend/
+server.py
+netflow.py
+test.py
