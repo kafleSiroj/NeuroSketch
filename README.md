@@ -1,15 +1,21 @@
 
 # NeuroSketch
 
-> A lightweight educational neural network framework built from scratch with NumPy.
 
 ![Python](https://img.shields.io/badge/Python-3.7+-blue)
 ![NumPy](https://img.shields.io/badge/NumPy-Required-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
+![PyPI version](https://img.shields.io/pypi/v/NeuroSketch)
 
-NeuroSketch is an educational deep learning framework that implements neural networks from first principles. Every stage of training—from forward propagation to gradient computation and parameter updates—is written manually using NumPy.
 
-Unlike production frameworks that rely on automatic differentiation, NeuroSketch makes every step explicit. Layers compute their own gradients, loss functions generate the initial gradient, and optimizers traverse the network during backpropagation. The goal is to understand *how* neural networks learn rather than simply using them.
+NeuroSketch is a lightweight educational deep learning framework that implements neural networks from first principles. Every stage of training, from forward propagation to backpropagation, is written manually using NumPy.
+
+Here is a demo, comparing with PyTorch:
+
+<a target="_blank" href="https://colab.research.google.com/github/kafleSiroj/NeuroSketch/blob/main/NeuroSketch%20vs%20PyTorch.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 
 ---
 
@@ -18,17 +24,15 @@ Unlike production frameworks that rely on automatic differentiation, NeuroSketch
 ## Layers
 
 - Fully Connected (`Linear`)
-- Sequential model container
-
-## Activation Functions
-
-- ReLU
-- LeakyReLU
-- Sigmoid
-- Tanh
-- Softmax
-- Swish
-- HeavySide
+- Sequential model container (`Sequential`)
+- Activation Functions
+    - ReLU
+    - LeakyReLU
+    - Sigmoid
+    - Tanh
+    - Softmax
+    - Swish
+    - HeavySide
 
 ## Loss Functions
 
@@ -44,23 +48,24 @@ Unlike production frameworks that rely on automatic differentiation, NeuroSketch
 - ADAM
 
 ## Utilities
-
-- Mini-batch `DataLoader`
-- Dataset shuffling
-- Optional dropping of incomplete batches
+- `DataLoader`
+    - Batch createion
+    - Dataset shuffling
+    - Optional dropping of incomplete batches
 
 ## Weight Initialization
 
 - He
 - Xavier
 - Zero
+- Random (Default)
 
 ---
 
 # Installation
 
 ```bash
-pip install NeuroSketch
+pip install neurosketch
 ```
 
 ---
@@ -82,9 +87,9 @@ y = np.random.randint(5, size=500)
 loader = DataLoader(x, y, batch_size=32, shuffle=True)
 
 model = Sequential(
-    Linear(20, 64, init_type="he"),
+    Linear(20, 64),
     ReLU(),
-    Linear(64, 5, init_type="xavier"),
+    Linear(64, 5),
     Softmax()
 )
 
@@ -119,16 +124,15 @@ print(model.summary())
 ```text
 src/
 └── NeuroSketch/
-    ├── engine/
-    │   ├── _module.py
-    │   ├── act.py
-    │   └── nn.py
-    ├── losses.py
-    ├── optims.py
-    ├── utils.py
-    └── LICENSE
-
-README.md
+│   ├── engine/
+│   │   ├── _module.py
+│   │   ├── act.py
+│   │   └── nn.py
+│   ├── losses.py
+│   ├── optims.py
+│   ├── utils.py
+│   └── LICENSE
+└──README.md
 ```
 
 ---
@@ -140,13 +144,7 @@ Forward Pass
 
 Input
  │
-Linear
- │
-Activation
- │
-Linear
- │
-Activation
+Model
  │
 Prediction
  │
@@ -156,33 +154,27 @@ Backward Pass
 
 Loss
  │
-criterion.backward()
+criterion.backward()  
  │
-optimizer.step()
+optimizer.step()    
  │
-Activation.backward()
- │
-Linear.backward()
- │
-Activation.backward()
- │
-Linear.backward()
- │
+*layers.backward()
+ |
 Parameter Update
 ```
 
 NeuroSketch follows a modular object-oriented design.
 
-- **Layers** perform forward and backward propagation.
-- **Activations** compute their own derivatives.
-- **Losses** compute the initial gradient.
-- **Optimizers** drive the complete backpropagation process and update parameters.
+- **Layers** perform forward propagation and gradient computation.
+- **Losses** compute the initial gradient i.e. of gradient of loss function with respect to the output of the last layer.
+- **Optimizers** drive the complete backpropagation process, and update parameters.
 
 No automatic differentiation or computational graph is used.
 
 ---
 
 # Training Flow
+The syntax in training process is same for all cases
 
 ```python
 prediction = model(x_batch)
@@ -191,121 +183,75 @@ loss = criterion(prediction, y_batch)
 criterion.backward()
 optimizer.step()
 ```
+---
 
-Internally:
+# Model setup:
 
-1. Forward propagation through every layer.
-2. Loss computation.
-3. Initial gradient generation.
-4. Optimizer walks backward through the model by calling each layer's `backward()`.
-5. Parameters are updated.
+1. First, import `DataLoader` object, it is located as `neurosketch.utils`. Then, load your data as `loaded_data = DataLoader(x: numpy.ndarray, y: numpy.ndarray, batch_size=<int>, shuffle=<bool>, drop_last=<bool>)` here, 
+    ``` 
+    batch_size;
+    if None: full-batch, if value <int> given, mini-batch
+
+    shuffle;
+    if True:
+        shuffles batches every epoch
+    else:
+        doesn't shuffle batches
+
+    drop_last;
+    if True:
+        drops incomplete batch
+    else:
+        doesn't drop incomplete batch        
+    ```
+2. Import the `Sequential` layer contatiner from `neurosketch.engine.nn`
+3. Now, import the `Linear` layer object from `neurosketch.engine.nn` and essential activations from `neurosketch.engine.nn.act`
+4. You can define you model in two ways:
+    ```python
+    model = Sequential(
+        <*layers>
+    )
+    ```
+    or
+    ```python
+    model = Sequential()
+    model.add(layer1)
+    model.add(layer2)
+    model.add(layer3)
+    ...
+    ...
+    ```
+    Note: The `Linear` layer requires you to enter two parameter `in_features` and `out_features` because shape of linear layer is *(in_features x out_features)*. You can even specify weight initialization for each linear layer. Shape of weight: *(out_features x in_feature)*.
+
+5. Now, import required loss from `neurosketch.losses` and required optimizer from `neurosketch.optims`. 
+6. To setup optimizer, you should pass entire model `model` into it, and you can put enter the learning rate `lr`:
+    `optim = <Optimizer>(model: Sequential, lr=1e-3)` or,
+for optimizers like Adam and Momentum, you can also edit the momentum parameter `beta=0.9` for `MOMENTUM`; `beta=0.9` and `gamma=0.999` for `ADAM`
+7. To setup the criterion function, you should pass the last layer of model `model.layers[-1]` to define the criterion;
+    `criterion = <Loss>(model.layers[-1])`
+and to find the loss, you can do:
+    `loss = criterion(pred, label)`
+8. Now, you can iterate through epochs and `loaded_data` like:
+    ```python
+    for epoch in range(epochs):
+        for x_batch, y_batch in loaded_data:
+            ...
+            ...
+    ```
+    and use the same trainig flow syntax mentioned above
 
 ---
 
-# Components
+# Working Principle:
 
-## Linear Layer
-
-Caches:
-
-- Input
-- Weights
-- Biases
-
-Computes:
-
-- `dW`
-- `dB`
-- Gradient for the previous layer
-
-using vectorized NumPy operations.
-
-## Activation Functions
-
-Each activation caches its forward output and computes its derivative during backpropagation.
-
-Softmax implements the Jacobian-vector product for efficient gradient propagation.
-
-## Loss Functions
-
-Every loss object stores predictions and labels during the forward pass.
-
-Calling
-
-```python
-criterion.backward()
-```
-
-computes the gradient of the loss with respect to the model output and passes it to the final activation layer.
-
-## Optimizers
-
-Optimizers not only update parameters but also perform the complete backward traversal of the network.
-
-Implemented:
-
-- SGD
-- MOMENTUM
-- ADAM
-
-## DataLoader
-
-Supports:
-
-- Mini-batching
-- Full-batch training
-- Dataset shuffling
-- Dropping incomplete batches
+1. `model(x_batch)` does forward propagation for each layers, caches and intermediate values inside each layer object
+2. `criterion(prediction, y_batch)` returns the loss value
+3. `critetion.backward()` calls the `.backward()` of the loss function, this calculates gradient of loss with respect to output of model `prediction`, this gets cached as `grad_next` of the last layer of the model, which is passed into the loss object during criterion defination `criterion = <Loss>(model.layers[-1])`
+4. Optimizer does backward pass to every layer of model from last layer, from what it caches the chained gradient upto previous layer as `grad_next` in the current layer by calling each layer's `.backward(next_grad)`
+5. Then the optimizer filters updatable layer `Linear` which has parameters `dW` and `dB`, fetches those and updates the parameters of all linear layers.
 
 ---
 
-# Design Philosophy
-
-NeuroSketch intentionally avoids hidden abstractions.
-
-Instead of relying on automatic differentiation, every layer implements its own forward and backward computations. This exposes every mathematical operation involved in neural network training, making the framework suitable for education and experimentation.
-
----
-
-# Comparison
-
-| Feature | NeuroSketch | PyTorch |
-|----------|-------------|----------|
-| Built with NumPy | ✅ | ❌ |
-| Manual gradient computation | ✅ | ❌ |
-| Automatic differentiation | ❌ | ✅ |
-| Explicit backpropagation | ✅ | ❌ |
-| Educational focus | ✅ | ⚠️ |
-| Production ready | ❌ | ✅ |
-
----
-
-# Roadmap
-
-## Completed
-
-- ✅ Sequential models
-- ✅ Linear layers
-- ✅ Weight initialization
-- ✅ Multiple activations
-- ✅ Multiple loss functions
-- ✅ SGD
-- ✅ MOMENTUM
-- ✅ ADAM
-- ✅ DataLoader
-
-## Planned
-
-- [ ] Dropout
-- [ ] Batch Normalization
-- [ ] Learning-rate schedulers
-- [ ] CNN layers
-- [ ] Pooling layers
-- [ ] RNN / LSTM
-- [ ] Model save/load
-- [ ] Documentation website
-
----
 
 # Requirements
 
@@ -320,10 +266,3 @@ MIT License.
 
 ---
 
-# Why NeuroSketch?
-
-NeuroSketch was created with one goal:
-
-> **Understand neural networks by building them—not by treating them as black boxes.**
-
-Every gradient, parameter update, and layer operation is implemented manually using NumPy, making the framework a practical resource for students, educators, and anyone interested in learning deep learning from first principles.
