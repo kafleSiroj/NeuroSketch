@@ -1,7 +1,7 @@
 import numpy as np
-from ._module import Module
+from ._neurosketch import NeuroSketch
 
-class Linear(Module):
+class Linear(NeuroSketch):
     def __init__(self, in_features, out_features, init_type=None):
         super().__init__()
         self.in_features = in_features
@@ -40,7 +40,7 @@ class Linear(Module):
         return f"Linear(in={self.in_features}, out={self.out_features})"
 
 
-class Sequential(Module):
+class Sequential(NeuroSketch):
     def __init__(self, *layers):
         super().__init__()
         self.layers = list(layers)

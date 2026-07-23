@@ -2,10 +2,20 @@ import numpy as np
 
 class DataLoader:
     """ 
-    Usage:
-        loader = DataLoader(x, y, batch_size=32, shuffle=True, drop_last=False)
+        ```
+        x: input, shape (samples, features) 
+        y: label
+        batch_size: put an integer value to create batches of that size
+        shuffle=True : shuffles the dataset/ batches each epochs
+        drop_last=True : drops incomplete batch if any
+        ```
+        
+        ### Usage:
+
+        ```loader = DataLoader(x, y, batch_size=32, shuffle=True, drop_last=False)
         for x_batch, y_batch in loader:
             ...
+        ```
     """
  
     def __init__(self, x, y, batch_size=None, shuffle=False, drop_last=False):
@@ -25,10 +35,15 @@ class DataLoader:
  
         if batch_size is None:
             batch_size = n_samples
- 
-        if batch_size <= 0 or batch_size > n_samples:
-            raise ValueError(f"Batch size {batch_size} must be between 1 and {n_samples}")
- 
+
+        else:
+            if type(batch_size) != int:
+                raise TypeError(f"Batch size must be an integer")
+            if batch_size <= 0 or batch_size > n_samples:
+                raise ValueError(f"Batch size {batch_size} must be between 1 and {n_samples}")
+
+        if type(shuffle) != bool or type(drop_last) != bool:
+            raise TypeError("This much be a boolean 'True' or 'False'")
         self.x = x.copy()
         self.y = y.copy()
         self.n_samples = n_samples

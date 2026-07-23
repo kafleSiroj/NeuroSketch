@@ -1,7 +1,7 @@
 import numpy as np
-from ._module import Module
+from ._neurosketch import NeuroSketch
 
-class Activation(Module):
+class Activation(NeuroSketch):
     def forward(self, x):
         raise NotImplementedError
     

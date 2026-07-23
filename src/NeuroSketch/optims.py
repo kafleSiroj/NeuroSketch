@@ -1,11 +1,35 @@
 import numpy as np
+from .engine.nn import Sequential
 
 class Optim:
-    def __init__(self, model, lr):
+    """
+        ```
+        model: pass the entire model
+        lr=1e-3: learning rate
+        ```
+
+        ### Usage:
+        ```
+        optim1 = SGD(model, lr=0.01) #batches created while loading data, works as both full batch and mini batch gradient descent
+
+        optim2 = MOMENTUM(model, beta=0.9) #beta=0.9: Momentum parameter
+
+        optim3 = ADAM(model, lr=0.001, beta=0.9, gamma=0.999)  #beta: first momentum; gamma: second momentum
+        ```
+    """
+    def __init__(self, model: Sequential, lr: float):
         self.model = model
         self.lr = lr
 
     def step(self):
+        """
+        Does backward pass to every layer of model from last layer, from what it caches the chained gradient upto previous layer as `grad_next` in the current layer by calling each layer's `.backward(next_grad)`
+        <br>
+        <br>
+        Then filters updatable layer `Linear` which has parameters `dW` and `dB`, fetches those and updates the parameters of all linear layers. This process is done my a static method `_call_back`
+
+        
+        """
         raise NotImplementedError
 
     def _call_back(self):
@@ -31,6 +55,25 @@ class Optim:
 
 
 class SGD(Optim):
+    """
+        ```
+        model: pass the entire model
+        lr=1e-3: learning rate
+        ```
+        *works as both batch and mini-batch*
+
+        
+        ### Usage:
+        ```
+            optim = SGD(model, lr=0.01) 
+
+            for x_batch, y_batch in data_loader:
+                ...
+                optim.step()
+                ...
+        ``` 
+    """
+
     def __init__(self, model, lr=1e-3):
         super().__init__(model, lr)
 
@@ -45,6 +88,22 @@ class SGD(Optim):
 
 
 class MOMENTUM(Optim):
+    """
+        ```
+        model: pass the entire model
+        lr=1e-3: learning rate
+        ```
+
+        ### Usage:
+        ```
+            optim = MOMENTUM(model, lr=1e-3, beta=0.9) #beta=0.9: Momentum parameter
+
+            for x_batch, y_batch in data_loader:
+                ...
+                optim.step()
+                ...
+        ```
+    """
     def __init__(self, model, lr=1e-3, beta=0.9):
         super().__init__(model, lr)
         self.beta = beta
@@ -67,12 +126,28 @@ class MOMENTUM(Optim):
 
 
 class ADAM(Optim):
+    """
+        ```
+        model: pass the entire model
+        lr=1e-3: learning rate
+        ```
+
+        Usage:
+        ```
+            optim = ADAM(model, lr=0.001, beta=0.9, gamma=0.999)  #beta=0.9: first momentum; gamma=0.999: second momentum
+
+            for x_batch, y_batch in data_loader:
+                ...
+                optim.step()
+                ...
+        ```
+    """
     def __init__(self, model, lr=1e-3, beta=0.9, gamma=0.999):
         super().__init__(model, lr)
         self.beta = beta
         self.gamma = gamma
         self.t = 0
-        self.epsilon = 1e-4
+        self.epsilon = 1e-8
         self.m = None
         self.v = None
 

@@ -1,4 +1,9 @@
-class Module:
+import numpy as np
+
+class NeuroSketch:
+    """
+    Base Class for the framework
+    """
     def __init__(self):
         self.params = {}
         self.layers = []
@@ -6,10 +11,10 @@ class Module:
         self.input = None
         self.grad_next = None
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
-    def __call__(self, x):
+    def __call__(self, x: np.ndarray):
         return self.forward(x)
     
     def _register_params(self, weight, bias): 
@@ -20,5 +25,5 @@ class Module:
         self.params["weights"].append(weight)
         self.params["biases"].append(bias)
 
-    def backward(self, next_grad):
+    def backward(self, next_grad: np.ndarray):
         raise NotImplementedError
